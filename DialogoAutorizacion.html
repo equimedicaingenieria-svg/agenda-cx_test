@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      padding: 18px;
+      background: #fafafa;
+      color: #333;
+      margin: 0;
+    }
+    .resumen-container {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      max-height: 240px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .button-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      flex: 1;
+      min-width: 120px;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    #btnAutorizar {
+      background: #34A853;
+      color: white;
+    }
+    #btnAutorizar:hover:not(:disabled) {
+      background: #2d9248;
+    }
+    #btnCancelar {
+      background: #666;
+      color: white;
+    }
+    #btnCancelar:hover:not(:disabled) {
+      background: #555;
+    }
+    #status {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      display: none;
+    }
+    #status.info {
+      background: #cfe2ff;
+      color: #084298;
+      display: block;
+    }
+    #status.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    #status.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="resumen-container" id="resumen"><?= resumen ?></div>
+  
+  <div class="button-container">
+    <button id="btnAutorizar">✅ Autorizar CX</button>
+    <button id="btnCancelar">✖️ Cancelar</button>
+  </div>
+  
+  <div id="status"></div>
+
+  <script>
+    var filaSeleccionada = <?= fila ?>;
+    var hojaSeleccionada = "<?= nombreHoja ?>";
+    var msgExito = "<?= mensajeExito ?>";
+    
+    console.log("Diálogo cargado - Fila:", filaSeleccionada, "Hoja:", hojaSeleccionada);
+    
+    document.getElementById("btnAutorizar").onclick = function() {
+      console.log("Click en Autorizar");
+      autorizarCirugia();
+    };
+    
+    document.getElementById("btnCancelar").onclick = function() {
+      console.log("Click en Cancelar");
+      google.script.host.close();
+    };
+    
+    function autorizarCirugia() {
+      console.log("Iniciando autorización...");
+      
+      var btnAutorizar = document.getElementById("btnAutorizar");
+      var btnCancelar = document.getElementById("btnCancelar");
+      var status = document.getElementById("status");
+      
+      btnAutorizar.disabled = true;
+      btnCancelar.disabled = true;
+      
+      status.className = "info";
+      status.innerHTML = '<span class="spinner"></span> Procesando autorización...';
+      
+      btnAutorizar.innerHTML = '<span class="spinner"></span> Autorizando...';
+      
+      // Copiar al portapapeles
+      try {
+        var resumenText = document.getElementById("resumen").innerText;
+        var textarea = document.createElement("textarea");
+        textarea.value = resumenText;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        console.log("Texto copiado");
+      } catch(e) {
+        console.error("Error al copiar:", e);
+      }
+      
+      console.log("Llamando a procesarAutorizacionCx...");
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          console.log("Éxito:", result);
+          status.className = "success";
+          status.innerHTML = msgExito;
+          setTimeout(function() {
+            google.script.host.close();
+          }, 2500);
+        })
+        .withFailureHandler(function(error) {
+          console.error("Error:", error);
+          status.className = "error";
+          status.textContent = "❌ Error: " + error.message;
+          btnAutorizar.disabled = false;
+          btnCancelar.disabled = false;
+          btnAutorizar.textContent = "✅ Autorizar CX";
+        })
+        .procesarAutorizacionCx(filaSeleccionada, hojaSeleccionada);
+    }
+  </script>
+</body>
+</html>

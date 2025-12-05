@@ -39,6 +39,7 @@ const CONFIG = {
    */
   SHEETS: {
     LINKS_SHEET_NAME: 'Links_AsistenciaTecnica',
+    AGENDA_SHEET_NAME: 'Agenda Cx',
     
     // Columnas de la hoja principal
     COLUMNS: {
@@ -47,7 +48,23 @@ const CONFIG = {
       INSTITUCION: 5,   // E
       HORA_CX: 6,       // F
       MEDICO: 7,        // G
+      CLIENTE: 8,       // H
+      ESTADO: 10,       // J
       MATERIAL: 18      // R
+    },
+    
+    // Configuración de estados
+    ESTADOS: {
+      AUTORIZADA: 'Autorizada',
+      PENDIENTE: 'Pendiente',
+      CANCELADA: 'Cancelada'
+    },
+    
+    // Colores para estados
+    COLORES: {
+      AUTORIZADA: '#d9ead3',  // Verde claro
+      PENDIENTE: '#fff2cc',    // Amarillo claro
+      CANCELADA: '#f4cccc'     // Rojo claro
     }
   },
 
@@ -72,6 +89,8 @@ const CONFIG = {
   MESSAGES: {
     ERROR_MISSING_DATA: 'Falta fecha o paciente.',
     TITLE_WHATSAPP_DIALOG: 'Resumen de la Cirugía',
+    TITLE_AUTORIZACION_DIALOG: 'Autorizar Cirugía',
+    AUTORIZACION_EXITOSA: '✅ Cirugía autorizada correctamente\n\nLos datos se han copiado al portapapeles.',
     WHATSAPP_TEMPLATE: '🟦 *ASISTENCIA TÉCNICA*\n\n'
   },
 
@@ -81,12 +100,19 @@ const CONFIG = {
   UI: {
     MENU_NAME: 'CX',
     MENU_ITEMS: {
-      RESUMEN: '📋 Ver resumen',
+      AUTORIZAR: '✅ Autorizar Cirugía',
+      GENERAR_RESUMEN: '📋 Generar Mensaje de Resumen',
       FLUJO_COMPLETO: '🗂️ Generar Carpeta + PDF + Form'
     },
     DIALOG: {
       WIDTH: 420,
-      HEIGHT: 360
+      HEIGHT: 360,
+      AUTORIZACION_HEIGHT: 420
     }
   }
 };
+
+// Hacer CONFIG accesible globalmente si no lo está
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = CONFIG;
+}

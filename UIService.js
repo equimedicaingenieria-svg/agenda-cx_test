@@ -13,9 +13,17 @@ const UIService = {
    */
   crearMenu: function() {
     try {
-      SpreadsheetApp.getUi()
-        .createMenu(CONFIG.UI.MENU_NAME)
-        .addItem(CONFIG.UI.MENU_ITEMS.RESUMEN, 'generarResumenCxDesdeFila')
+      const ui = SpreadsheetApp.getUi();
+      
+      // Crear submenú de Resumen
+      const submenuResumen = ui.createMenu('📄 Resumen')
+        .addItem(CONFIG.UI.MENU_ITEMS.GENERAR_RESUMEN, 'generarMensajeResumen');
+      
+      // Menú principal
+      ui.createMenu(CONFIG.UI.MENU_NAME)
+        .addItem(CONFIG.UI.MENU_ITEMS.AUTORIZAR, 'autorizarCxDesdeFila')
+        .addSubMenu(submenuResumen)
+        .addSeparator()
         .addItem(CONFIG.UI.MENU_ITEMS.FLUJO_COMPLETO, 'flujoCxDesdeFila')
         .addToUi();
     } catch (error) {
@@ -171,5 +179,118 @@ const UIService = {
            '📦 *Material:* ' + Utils.obtenerValorODefault(datos.material) + '\n\n' +
            '📄 *Informe Técnico de la Cirugía:*\n' +
            linkForm;
+  },
+
+  /**
+   * Construye el mensaje de resumen para autorización
+   * @private
+   * @param {Object} datos - Datos de la cirugía
+   * @returns {string} Mensaje formateado
+   */
+  _construirMensajeResumen: function(datos) {
+    // Construir la línea de fecha con o sin hora
+    var lineaFecha = '📅 Fecha: ' + Utils.formatearFechaArg(datos.fechaCx);
+    
+    // Agregar hora solo si existe
+    if (datos.horaCx && datos.horaCx.toString().trim() !== '') {
+      lineaFecha += ' – ' + Utils.formatearHoraArg(datos.horaCx) + ' hs';
+    }
+    
+    return '✅ CX Autorizada' + '\n' +
+           lineaFecha + '\n' +
+           '\n' +
+           '👤 Paciente: ' + Utils.obtenerValorODefault(datos.paciente) + '\n' +
+           '🏥 Institución: ' + Utils.obtenerValorODefault(datos.institucion) + '\n' +
+           '🩺 Médico: ' + Utils.obtenerValorODefault(datos.medico) + '\n' +
+           '👥 Cliente: ' + Utils.obtenerValorODefault(datos.cliente) + '\n' +
+           '\n' +
+           '📦 Material: ' + Utils.obtenerValorODefault(datos.material);
+  },
+
+  /**
+   * Muestra el diálogo de resumen de cirugía (solo lectura con botón copiar)
+   * @param {Object} datos - Datos de la cirugía
+   */
+  mostrarDialogoResumen: function(datos) {
+    try {
+      const mensaje = this._construirMensajeResumen(datos);
+      const html = this._generarHtmlResumen(mensaje);
+      
+      const htmlOutput = HtmlService.createHtmlOutput(html)
+        .setWidth(CONFIG.UI.DIALOG.WIDTH)
+        .setHeight(380);
+      
+      SpreadsheetApp.getUi().showModalDialog(
+        htmlOutput,
+        '📋 Mensaje de Resumen - Cirugía Autorizada'
+      );
+    } catch (error) {
+      Logger.log('Error al mostrar diálogo de resumen: ' + error.message);
+      throw new Error('Error al mostrar diálogo: ' + error.message);
+    }
+  },
+
+  /**
+   * Genera el HTML para el diálogo de resumen (solo lectura)
+   * @private
+   * @param {string} mensaje - Mensaje a mostrar
+   * @returns {string} HTML generado
+   */
+  _generarHtmlResumen: function(mensaje) {
+    const mensajeSafe = Utils.sanitizarHtml(mensaje);
+    
+    const template = HtmlService.createTemplateFromFile('DialogoResumen');
+    template.resumen = mensajeSafe;
+    
+    return template.evaluate().getContent();
+  },
+
+  /**
+   * Muestra el diálogo de autorización de cirugía
+   * @param {Object} datos - Datos de la cirugía
+   * @param {number} fila - Número de fila
+   * @param {string} nombreHoja - Nombre de la hoja
+   */
+  mostrarDialogoAutorizacion: function(datos, fila, nombreHoja) {
+    try {
+      const mensaje = this._construirMensajeResumen(datos);
+      const html = this._generarHtmlAutorizacion(mensaje, fila, nombreHoja);
+      
+      const htmlOutput = HtmlService.createHtmlOutput(html)
+        .setWidth(CONFIG.UI.DIALOG.WIDTH)
+        .setHeight(CONFIG.UI.DIALOG.AUTORIZACION_HEIGHT);
+      
+      SpreadsheetApp.getUi().showModalDialog(
+        htmlOutput,
+        CONFIG.MESSAGES.TITLE_AUTORIZACION_DIALOG
+      );
+    } catch (error) {
+      Logger.log('Error al mostrar diálogo: ' + error.message);
+      throw new Error('Error al mostrar diálogo: ' + error.message);
+    }
+  },
+
+  /**
+   * Genera el HTML para el diálogo de autorización usando template
+   * @private
+   * @param {string} mensaje - Mensaje a mostrar
+   * @param {number} fila - Número de fila
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @returns {HtmlOutput} HTML generado
+   */
+  _generarHtmlAutorizacion: function(mensaje, fila, nombreHoja) {
+    const mensajeSafe = Utils.sanitizarHtml(mensaje);
+    const mensajeExito = Utils.sanitizarHtml(CONFIG.MESSAGES.AUTORIZACION_EXITOSA);
+    const nombreHojaSafe = nombreHoja.replace(/'/g, "\\'");
+    
+    // Usar el archivo HTML como template
+    const template = HtmlService.createTemplateFromFile('DialogoAutorizacion');
+    template.resumen = mensajeSafe;
+    template.fila = fila;
+    template.nombreHoja = nombreHojaSafe;
+    template.mensajeExito = mensajeExito;
+    
+    return template.evaluate().getContent();
   }
 };
+

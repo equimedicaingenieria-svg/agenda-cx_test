@@ -36,12 +36,38 @@ const SheetService = {
     
     return {
       fechaCx: values[cols.FECHA_CX - 1],
+      estado: values[cols.ESTADO - 1],
       paciente: values[cols.PACIENTE - 1],
       institucion: values[cols.INSTITUCION - 1],
       horaCx: values[cols.HORA_CX - 1],
       medico: values[cols.MEDICO - 1],
+      cliente: values[cols.CLIENTE - 1],
       material: values[cols.MATERIAL - 1]
     };
+  },
+
+  /**
+   * Verifica si una cirugía ya está autorizada
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @returns {boolean} true si ya está autorizada
+   */
+  estaAutorizada: function(nombreHoja, fila) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        throw new Error('Hoja "' + nombreHoja + '" no encontrada');
+      }
+      
+      const columnaEstado = CONFIG.SHEETS.COLUMNS.ESTADO;
+      const estadoActual = hoja.getRange(fila, columnaEstado).getValue();
+      
+      return estadoActual === CONFIG.SHEETS.ESTADOS.AUTORIZADA;
+    } catch (error) {
+      throw new Error('Error al verificar estado: ' + error.message);
+    }
   },
 
   /**
@@ -152,6 +178,49 @@ const SheetService = {
   },
 
   /**
+   * Verifica si el usuario actual tiene permisos para editar celdas protegidas
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @returns {boolean} true si puede editar, false si no
+   */
+  verificarPermisosEdicion: function(nombreHoja, fila) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        return false;
+      }
+      
+      const columnaEstado = CONFIG.SHEETS.COLUMNS.ESTADO;
+      const celda = hoja.getRange(fila, columnaEstado);
+      
+      // Intentar obtener protecciones
+      const protecciones = hoja.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+      
+      // Verificar si la celda está protegida
+      for (var i = 0; i < protecciones.length; i++) {
+        var rango = protecciones[i].getRange();
+        if (rango.getRow() <= fila && 
+            fila <= rango.getLastRow() &&
+            rango.getColumn() <= columnaEstado && 
+            columnaEstado <= rango.getLastColumn()) {
+          
+          // La celda está protegida, verificar si puede editar
+          if (!protecciones[i].canEdit()) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      Logger.log('Error al verificar permisos: ' + error.message);
+      return false;
+    }
+  },
+
+  /**
    * Obtiene la hoja activa y la fila seleccionada
    * @returns {Object} Objeto con sheet y row
    */
@@ -161,5 +230,90 @@ const SheetService = {
     const row = sheet.getActiveCell().getRow();
     
     return { sheet, row };
+  },
+
+  /**
+   * Actualiza el estado de una cirugía en la columna ESTADO
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @param {string} estado - Estado a establecer
+   */
+  actualizarEstadoCx: function(nombreHoja, fila, estado) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        throw new Error('Hoja "' + nombreHoja + '" no encontrada');
+      }
+      
+      const columnaEstado = CONFIG.SHEETS.COLUMNS.ESTADO;
+      const celda = hoja.getRange(fila, columnaEstado);
+      
+      // Intentar actualizar directamente
+      celda.setValue(estado);
+      
+    } catch (error) {
+      // Si falla por protección, dar mensaje claro
+      if (error.message.indexOf('protegid') !== -1 || error.message.indexOf('protected') !== -1) {
+        throw new Error('La columna ESTADO está protegida. Por favor, pide al propietario de la hoja que te agregue como editor autorizado en las protecciones de las columnas A-R.');
+      }
+      throw new Error('Error al actualizar estado: ' + error.message);
+    }
+  },
+
+  /**
+   * Aplica formato a una fila completa
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @param {string} colorFondo - Color de fondo en formato hexadecimal
+   */
+  formatearFilaCx: function(nombreHoja, fila, colorFondo) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        throw new Error('Hoja "' + nombreHoja + '" no encontrada');
+      }
+      
+      const ultimaColumna = hoja.getLastColumn();
+      const rangoFila = hoja.getRange(fila, 1, 1, ultimaColumna);
+      
+      // Intentar aplicar formato directamente
+      rangoFila.setBackground(colorFondo);
+      
+    } catch (error) {
+      if (error.message.indexOf('protegid') !== -1 || error.message.indexOf('protected') !== -1) {
+        throw new Error('La fila está protegida. Por favor, pide al propietario de la hoja que te agregue como editor autorizado.');
+      }
+      throw new Error('Error al formatear fila: ' + error.message);
+    }
+  },
+
+  /**
+   * Autoriza una cirugía: actualiza estado y aplica formato
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   */
+  autorizarCirugia: function(nombreHoja, fila) {
+    try {
+      // Actualizar estado
+      this.actualizarEstadoCx(
+        nombreHoja,
+        fila,
+        CONFIG.SHEETS.ESTADOS.AUTORIZADA
+      );
+      
+      // Aplicar formato
+      this.formatearFilaCx(
+        nombreHoja,
+        fila,
+        CONFIG.SHEETS.COLORES.AUTORIZADA
+      );
+      
+    } catch (error) {
+      throw new Error('Error al autorizar cirugía: ' + error.message);
+    }
   }
 };
