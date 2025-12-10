@@ -11,15 +11,24 @@
  */
 const CONFIG = {
   DRIVE: {
-    PARENT_FOLDER_ID: '18_VzySYKclQSprTiYrY3WPm7nzFkz4ol',
+    //PARENT_FOLDER_ID: '18_VzySYKclQSprTiYrY3WPm7nzFkz4ol', 
+    PARENT_FOLDER_ID: '1zWFGYBLXirVW7vGefodmCnjOp_Q9Jr9e',
     TEMPLATE_DOC_ID: '1xAhYoynaUhtA8DDx0MMt5VVYlpbOiRf8tUx9Pg7DE-Y'
+  },
+
+  /**
+   * Configuración de acortamiento de URLs
+   */
+  URL_SHORTENER: {
+    ENABLED: true,  // Activar/desactivar acortamiento de URLs
+    SERVICE: 'tinyurl'  // 'tinyurl' o 'isgd'
   },
 
   /**
    * Configuración del Formulario de Google
    */
   FORM: {
-    ID: '1xOkS21hHbzLuTCHvMkCGWACjkpekpK7Rovt1lxQmv3s',
+    ID: '1mh8kLDeS8i9Ulwhx0X7oXg7mT8_V_M2fVrWwgurw2Q8',
     
     // Entry IDs de los campos del formulario
     ENTRIES: {
@@ -44,6 +53,7 @@ const CONFIG = {
     // Columnas de la hoja principal
     COLUMNS: {
       FECHA_CX: 1,      // A
+      ID_PROYECTO: 3,   // C
       PACIENTE: 4,      // D
       INSTITUCION: 5,   // E
       HORA_CX: 6,       // F
@@ -87,7 +97,7 @@ const CONFIG = {
    * Mensajes del sistema
    */
   MESSAGES: {
-    ERROR_MISSING_DATA: 'Falta fecha o paciente.',
+    ERROR_MISSING_DATA: 'Faltan datos obligatorios: Fecha, ID Proyecto y/o Paciente.',
     TITLE_WHATSAPP_DIALOG: 'Resumen de la Cirugía',
     TITLE_AUTORIZACION_DIALOG: 'Autorizar Cirugía',
     AUTORIZACION_EXITOSA: '✅ Cirugía autorizada correctamente\n\nLos datos se han copiado al portapapeles.',

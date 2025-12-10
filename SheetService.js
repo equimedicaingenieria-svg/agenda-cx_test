@@ -36,6 +36,7 @@ const SheetService = {
     
     return {
       fechaCx: values[cols.FECHA_CX - 1],
+      idProyecto: values[cols.ID_PROYECTO - 1],
       estado: values[cols.ESTADO - 1],
       paciente: values[cols.PACIENTE - 1],
       institucion: values[cols.INSTITUCION - 1],
@@ -314,6 +315,37 @@ const SheetService = {
       
     } catch (error) {
       throw new Error('Error al autorizar cirugía: ' + error.message);
+    }
+  },
+
+  /**
+   * Inserta un hipervínculo a la carpeta en la columna ID_PROYECTO
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @param {string} folderUrl - URL de la carpeta
+   * @param {string} folderName - Nombre de la carpeta
+   */
+  insertarHipervincultoCarpeta: function(nombreHoja, fila, folderUrl, folderName) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        throw new Error('Hoja "' + nombreHoja + '" no encontrada');
+      }
+      
+      const columnaIdProyecto = CONFIG.SHEETS.COLUMNS.ID_PROYECTO;
+      const celda = hoja.getRange(fila, columnaIdProyecto);
+      
+      // Crear fórmula de hipervínculo
+      const formula = '=HYPERLINK("' + folderUrl + '";"📁 ' + folderName + '")';
+      celda.setFormula(formula);
+      
+    } catch (error) {
+      if (error.message.indexOf('protegid') !== -1 || error.message.indexOf('protected') !== -1) {
+        throw new Error('La columna ID_PROYECTO está protegida. Por favor, pide al propietario de la hoja que te agregue como editor autorizado.');
+      }
+      throw new Error('Error al insertar hipervínculo: ' + error.message);
     }
   }
 };

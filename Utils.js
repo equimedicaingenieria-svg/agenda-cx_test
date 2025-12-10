@@ -81,7 +81,7 @@ const Utils = {
    * @returns {boolean} true si los datos son válidos
    */
   validarDatosObligatorios: function(datos) {
-    return !!(datos.fechaCx && datos.paciente);
+    return !!(datos.fechaCx && datos.idProyecto && datos.paciente);
   },
 
   /**
@@ -99,14 +99,14 @@ const Utils = {
   },
 
   /**
-   * Genera un nombre de archivo basado en fecha y paciente
-   * @param {string} fechaStr - Fecha formateada
+   * Genera un nombre de archivo basado en ID proyecto y paciente
+   * @param {string} idProyecto - ID del proyecto
    * @param {string} paciente - Nombre del paciente
    * @param {string} sufijo - Sufijo opcional
    * @returns {string} Nombre del archivo
    */
-  generarNombreArchivo: function(fechaStr, paciente, sufijo = '') {
-    const nombre = fechaStr + ' - ' + paciente;
+  generarNombreArchivo: function(idProyecto, paciente, sufijo = '') {
+    const nombre = idProyecto + ' - ' + paciente;
     return sufijo ? nombre + ' - ' + sufijo : nombre;
   },
 

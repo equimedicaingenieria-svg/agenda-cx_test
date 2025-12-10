@@ -13,13 +13,20 @@ const FormService = {
    * @param {string} folderName - Nombre de la carpeta
    * @param {string} folderId - ID de la carpeta
    * @param {Object} data - Datos para prellenar
-   * @returns {string} URL del formulario prellenado
+   * @returns {string} URL del formulario prellenado (acortada si está habilitado)
    */
   crearLinkFormPrellenado: function(folderName, folderId, data) {
     try {
       const baseUrl = this._construirUrlBase();
       const parametros = this._construirParametros(folderName, folderId, data);
-      return baseUrl + parametros;
+      const urlLarga = baseUrl + parametros;
+      
+      // Acortar la URL solo si está habilitado en la configuración
+      if (CONFIG.URL_SHORTENER.ENABLED) {
+        return UrlShortenerService.acortarUrlConReintentos(urlLarga);
+      }
+      
+      return urlLarga;
     } catch (error) {
       throw new Error('Error al crear link del formulario: ' + error.message);
     }

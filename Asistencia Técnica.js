@@ -12,6 +12,8 @@
  * - DriveService.js: Operaciones con Drive
  * - PdfService.js: Generación de PDFs
  * - FormService.js: Manejo de formularios
+ * - FormTriggerService.js: Procesamiento de envíos del formulario
+ * - UrlShortenerService.js: Acortamiento de URLs
  * - UIService.js: Interfaz de usuario
  */
 
@@ -166,8 +168,11 @@ function flujoCxDesdeFila() {
     }
 
     // 3. Crear carpeta
-    const fechaParaNombre = Utils.formatearFechaParaNombre(datosRaw.fechaCx);
-    const folder = DriveService.crearCarpetaCx(fechaParaNombre, datosRaw.paciente);
+    const folder = DriveService.crearCarpetaCx(datosRaw.idProyecto, datosRaw.paciente);
+    const folderUrl = folder.getUrl();
+
+    // 3.1. Insertar hipervínculo de la carpeta en columna C
+    SheetService.insertarHipervincultoCarpeta(sheet.getName(), row, folderUrl, datosRaw.idProyecto);
 
     // 4. Generar PDF
     const datosPdf = PdfService.prepararDatosParaPdf(datosRaw);
@@ -205,5 +210,42 @@ function flujoCxDesdeFila() {
   } catch (error) {
     UIService.mostrarAlerta('Error en el flujo: ' + error.message);
     Logger.log('Error detallado: ' + error.stack);
+  }
+}
+
+/**
+ * Instala el trigger de formulario desde el menú
+ */
+function instalarTriggerFormulario() {
+  try {
+    const resultado = FormTriggerService.instalarTrigger();
+    UIService.mostrarAlerta(resultado);
+  } catch (error) {
+    UIService.mostrarAlerta('Error: ' + error.message);
+  }
+}
+
+/**
+ * Verifica el estado del trigger de formulario
+ */
+function verificarTriggerFormulario() {
+  try {
+    const triggers = ScriptApp.getProjectTriggers();
+    let encontrado = false;
+    
+    for (var i = 0; i < triggers.length; i++) {
+      if (triggers[i].getHandlerFunction() === 'onFormSubmit') {
+        encontrado = true;
+        break;
+      }
+    }
+    
+    if (encontrado) {
+      UIService.mostrarAlerta('✅ El trigger de formulario está instalado correctamente.\n\nLos archivos subidos al formulario se moverán automáticamente a la carpeta del proyecto.');
+    } else {
+      UIService.mostrarAlerta('⚠️ El trigger de formulario NO está instalado.\n\nUsa la opción "Instalar Trigger de Formulario" del menú Configuración para instalarlo.');
+    }
+  } catch (error) {
+    UIService.mostrarAlerta('Error: ' + error.message);
   }
 }

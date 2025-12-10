@@ -10,14 +10,14 @@ const DriveService = {
 
   /**
    * Crea una carpeta para una cirugía
-   * @param {string} fechaForName - Fecha formateada para el nombre
+   * @param {string} idProyecto - ID del proyecto
    * @param {string} paciente - Nombre del paciente
    * @returns {Folder} Carpeta creada
    */
-  crearCarpetaCx: function(fechaForName, paciente) {
+  crearCarpetaCx: function(idProyecto, paciente) {
     try {
       const parent = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
-      const nombreCarpeta = Utils.generarNombreArchivo(fechaForName, paciente);
+      const nombreCarpeta = Utils.generarNombreArchivo(idProyecto, paciente);
       return parent.createFolder(nombreCarpeta);
     } catch (error) {
       throw new Error('Error al crear carpeta: ' + error.message);

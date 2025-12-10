@@ -19,12 +19,19 @@ const UIService = {
       const submenuResumen = ui.createMenu('📄 Resumen')
         .addItem(CONFIG.UI.MENU_ITEMS.GENERAR_RESUMEN, 'generarMensajeResumen');
       
+      // Crear submenú de Configuración
+      const submenuConfig = ui.createMenu('⚙️ Configuración')
+        .addItem('Instalar Trigger de Formulario', 'instalarTriggerFormulario')
+        .addItem('Verificar Trigger de Formulario', 'verificarTriggerFormulario');
+      
       // Menú principal
       ui.createMenu(CONFIG.UI.MENU_NAME)
         .addItem(CONFIG.UI.MENU_ITEMS.AUTORIZAR, 'autorizarCxDesdeFila')
         .addSubMenu(submenuResumen)
         .addSeparator()
         .addItem(CONFIG.UI.MENU_ITEMS.FLUJO_COMPLETO, 'flujoCxDesdeFila')
+        .addSeparator()
+        .addSubMenu(submenuConfig)
         .addToUi();
     } catch (error) {
       throw new Error('Error al crear menú: ' + error.message);
