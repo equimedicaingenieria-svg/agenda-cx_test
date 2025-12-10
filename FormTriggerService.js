@@ -335,6 +335,19 @@ const FormTriggerService = {
         throw new Error('Carpeta no encontrada: ' + folderName);
       }
       
+      // Buscar o crear la subcarpeta "02 - Informe Asistencia Técnica"
+      const nombreSubcarpeta = '02 - Informe Asistencia Técnica';
+      let subcarpetaDestino;
+      
+      const subcarpetas = targetFolder.getFoldersByName(nombreSubcarpeta);
+      if (subcarpetas.hasNext()) {
+        subcarpetaDestino = subcarpetas.next();
+        Logger.log('✓ Subcarpeta encontrada: ' + subcarpetaDestino.getName());
+      } else {
+        subcarpetaDestino = targetFolder.createFolder(nombreSubcarpeta);
+        Logger.log('✓ Subcarpeta creada: ' + subcarpetaDestino.getName());
+      }
+      
       // Extraer solo el ID del proyecto (la parte antes del " - ")
       let idProyecto = folderName;
       if (folderName.indexOf(' - ') !== -1) {
@@ -360,8 +373,8 @@ const FormTriggerService = {
           // Obtener carpetas actuales del archivo
           const parents = file.getParents();
           
-          // Agregar a la carpeta destino
-          targetFolder.addFile(file);
+          // Agregar a la subcarpeta destino
+          subcarpetaDestino.addFile(file);
           
           // Remover de carpetas anteriores
           while (parents.hasNext()) {
