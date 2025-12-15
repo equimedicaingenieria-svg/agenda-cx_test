@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      padding: 18px;
+      background: #fafafa;
+      color: #333;
+      margin: 0;
+    }
+    .resumen-container {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      max-height: 240px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .button-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      flex: 1;
+      min-width: 120px;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    #btnActualizar {
+      background: #1A73E8;
+      color: white;
+    }
+    #btnActualizar:hover:not(:disabled) {
+      background: #1557B0;
+    }
+    #btnCopiar {
+      background: #34A853;
+      color: white;
+    }
+    #btnCopiar:hover:not(:disabled) {
+      background: #2D9248;
+    }
+    #btnSalir {
+      background: #5F6368;
+      color: white;
+    }
+    #btnSalir:hover {
+      background: #4A4D50;
+    }
+    .status-mensaje {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-mensaje.success {
+      background: #D1F2EB;
+      color: #0E6655;
+      border: 1px solid #A6E9D5;
+      display: block;
+    }
+    .status-mensaje.error {
+      background: #F8D7DA;
+      color: #721C24;
+      border: 1px solid #F5C6CB;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="resumen-container" id="resumenTexto">
+    <?= mensaje ?>
+  </div>
+  
+  <div class="button-container">
+    <button id="btnActualizar" onclick="actualizarPdf()">📄 Actualizar PDF</button>
+    <button id="btnCopiar" onclick="copiarAlPortapapeles()">📋 Copiar al Portapapeles</button>
+  </div>
+  
+  <div class="button-container">
+    <button id="btnSalir" onclick="cerrarDialogo()">❌ Salir</button>
+  </div>
+  
+  <div id="statusMensaje" class="status-mensaje"></div>
+
+  <script>
+    const fila = <?= fila ?>;
+    const nombreHoja = "<?= nombreHoja ?>";
+    
+    /**
+     * Actualiza el PDF en la carpeta del proyecto
+     */
+    function actualizarPdf() {
+      const btn = document.getElementById('btnActualizar');
+      const statusDiv = document.getElementById('statusMensaje');
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Generando PDF...';
+      statusDiv.className = 'status-mensaje';
+      statusDiv.style.display = 'none';
+      
+      google.script.run
+        .withSuccessHandler(function(resultado) {
+          btn.disabled = false;
+          btn.textContent = '📄 Actualizar PDF';
+          
+          if (resultado.success) {
+            statusDiv.className = 'status-mensaje success';
+            statusDiv.textContent = '✓ ' + resultado.mensaje;
+          } else {
+            statusDiv.className = 'status-mensaje error';
+            statusDiv.textContent = '✗ Error: ' + resultado.mensaje;
+          }
+        })
+        .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.textContent = '📄 Actualizar PDF';
+          statusDiv.className = 'status-mensaje error';
+          statusDiv.textContent = '✗ Error: ' + error.message;
+        })
+        .generarPdfResumenCx(fila, nombreHoja);
+    }
+    
+    /**
+     * Copia el resumen al portapapeles
+     */
+    function copiarAlPortapapeles() {
+      const texto = document.getElementById('resumenTexto').innerText;
+      const btn = document.getElementById('btnCopiar');
+      const statusDiv = document.getElementById('statusMensaje');
+      
+      // Crear elemento temporal para copiar
+      const textarea = document.createElement('textarea');
+      textarea.value = texto;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        document.execCommand('copy');
+        btn.textContent = '✓ Copiado!';
+        statusDiv.className = 'status-mensaje success';
+        statusDiv.textContent = '✓ Texto copiado al portapapeles';
+        
+        setTimeout(() => {
+          btn.textContent = '📋 Copiar al Portapapeles';
+        }, 2000);
+      } catch (error) {
+        statusDiv.className = 'status-mensaje error';
+        statusDiv.textContent = '✗ Error al copiar: ' + error.message;
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+    
+    /**
+     * Cierra el diálogo
+     */
+    function cerrarDialogo() {
+      google.script.host.close();
+    }
+  </script>
+</body>
+</html>

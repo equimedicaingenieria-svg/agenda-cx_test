@@ -114,7 +114,13 @@ const FormTriggerService = {
       }
       
       // Mover archivos a la carpeta del proyecto
-      this._moverArchivosACarpeta(archivosAdjuntos, respuestas.folderId, respuestas.folderName);
+      // Extraer ID del proyecto del folderName
+      let idProyecto = respuestas.folderName;
+      if (respuestas.folderName && respuestas.folderName.indexOf(' - ') !== -1) {
+        idProyecto = respuestas.folderName.split(' - ')[0];
+      }
+      
+      this._moverArchivosACarpeta(archivosAdjuntos, respuestas.folderName, idProyecto);
       
       Logger.log('=== Procesamiento completado exitosamente ===');
       
@@ -310,14 +316,12 @@ const FormTriggerService = {
    * Mueve los archivos a la carpeta del proyecto y los renombra
    * @private
    * @param {Array} fileIds - Array de IDs de archivos
-   * @param {string} targetFolderId - ID de la carpeta destino (puede ser el mismo que folderName)
-   * @param {string} folderName - ID completo del proyecto (ej: "2025/12/17-0001 - SELEME HILDA ")
+   * @param {string} folderName - Nombre completo de la carpeta del proyecto (ej: "2025/12/17-0001 - SELEME HILDA")
+   * @param {string} idProyecto - ID del proyecto para renombrar archivos (ej: "2025/12/17-0001")
    */
-  _moverArchivosACarpeta: function(fileIds, targetFolderId, folderName) {
+  _moverArchivosACarpeta: function(fileIds, folderName, idProyecto) {
     try {
-      // El folderId puede venir con el formato completo "2025/12/17-0001 - PACIENTE"
-      // Necesitamos obtener la carpeta por nombre, no por ID
-      
+      // Buscar la carpeta del proyecto por nombre
       Logger.log('Buscando carpeta con nombre: ' + folderName);
       
       // Obtener la carpeta padre
@@ -348,11 +352,7 @@ const FormTriggerService = {
         Logger.log('✓ Subcarpeta creada: ' + subcarpetaDestino.getName());
       }
       
-      // Extraer solo el ID del proyecto (la parte antes del " - ")
-      let idProyecto = folderName;
-      if (folderName.indexOf(' - ') !== -1) {
-        idProyecto = folderName.split(' - ')[0];
-      }
+      // Usar el ID del proyecto recibido como parámetro
       Logger.log('ID Proyecto para renombrar: ' + idProyecto);
       
       let movidosExitosamente = 0;

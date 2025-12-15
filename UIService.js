@@ -15,10 +15,6 @@ const UIService = {
     try {
       const ui = SpreadsheetApp.getUi();
       
-      // Crear submenú de Resumen
-      const submenuResumen = ui.createMenu('📄 Resumen')
-        .addItem(CONFIG.UI.MENU_ITEMS.GENERAR_RESUMEN, 'generarMensajeResumen');
-      
       // Crear submenú de Configuración
       const submenuConfig = ui.createMenu('⚙️ Configuración')
         .addItem('Instalar Trigger de Formulario', 'instalarTriggerFormulario')
@@ -27,9 +23,9 @@ const UIService = {
       // Menú principal
       ui.createMenu(CONFIG.UI.MENU_NAME)
         .addItem(CONFIG.UI.MENU_ITEMS.AUTORIZAR, 'autorizarCxDesdeFila')
-        .addSubMenu(submenuResumen)
+        .addItem('📋 Resumen CX', 'mostrarResumenCx')
         .addSeparator()
-        .addItem(CONFIG.UI.MENU_ITEMS.FLUJO_COMPLETO, 'flujoCxDesdeFila')
+        .addItem('📝 Formulario Asistencia Técnica', 'mostrarFormularioAsistenciaTecnica')
         .addSeparator()
         .addSubMenu(submenuConfig)
         .addToUi();
@@ -233,6 +229,65 @@ const UIService = {
       );
     } catch (error) {
       Logger.log('Error al mostrar diálogo de resumen: ' + error.message);
+      throw new Error('Error al mostrar diálogo: ' + error.message);
+    }
+  },
+
+  /**
+   * Muestra el diálogo de Resumen CX con opciones de actualizar PDF y copiar
+   * @param {Object} datos - Datos de la cirugía
+   * @param {number} fila - Número de fila
+   * @param {string} nombreHoja - Nombre de la hoja
+   */
+  mostrarDialogoResumenCx: function(datos, fila, nombreHoja) {
+    try {
+      const mensaje = this._construirMensajeResumen(datos);
+      
+      const template = HtmlService.createTemplateFromFile('DialogoResumenCx');
+      template.mensaje = Utils.sanitizarHtml(mensaje);
+      template.fila = fila;
+      template.nombreHoja = nombreHoja;
+      
+      const htmlOutput = template.evaluate()
+        .setWidth(CONFIG.UI.DIALOG.WIDTH)
+        .setHeight(450);
+      
+      SpreadsheetApp.getUi().showModalDialog(
+        htmlOutput,
+        '📋 Resumen CX - ' + datos.paciente
+      );
+    } catch (error) {
+      Logger.log('Error al mostrar diálogo de resumen CX: ' + error.message);
+      throw new Error('Error al mostrar diálogo: ' + error.message);
+    }
+  },
+
+  /**
+   * Muestra el diálogo de Formulario Asistencia Técnica
+   * @param {Object} datos - Datos de la cirugía
+   * @param {number} fila - Número de fila
+   * @param {string} nombreHoja - Nombre de la hoja
+   */
+  mostrarDialogoFormularioAsistencia: function(datos, fila, nombreHoja) {
+    try {
+      const template = HtmlService.createTemplateFromFile('DialogoFormularioAsistencia');
+      template.paciente = Utils.sanitizarHtml(datos.paciente || 'N/A');
+      template.idProyecto = Utils.sanitizarHtml(datos.idProyecto || 'N/A');
+      template.fecha = Utils.formatearFechaArg(datos.fechaCx);
+      template.institucion = Utils.sanitizarHtml(datos.institucion || 'N/A');
+      template.fila = fila;
+      template.nombreHoja = nombreHoja;
+      
+      const htmlOutput = template.evaluate()
+        .setWidth(500)
+        .setHeight(550);
+      
+      SpreadsheetApp.getUi().showModalDialog(
+        htmlOutput,
+        '📝 Formulario Asistencia Técnica'
+      );
+    } catch (error) {
+      Logger.log('Error al mostrar diálogo de formulario: ' + error.message);
       throw new Error('Error al mostrar diálogo: ' + error.message);
     }
   },

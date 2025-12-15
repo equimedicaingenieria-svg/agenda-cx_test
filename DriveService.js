@@ -16,7 +16,8 @@ const DriveService = {
    */
   crearCarpetaCx: function(idProyecto, paciente) {
     try {
-      const parent = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
+      // Usar el método validado para obtener la carpeta padre
+      const parent = this.obtenerCarpetaPadre();
       const nombreCarpeta = Utils.generarNombreArchivo(idProyecto, paciente);
       return parent.createFolder(nombreCarpeta);
     } catch (error) {
@@ -30,7 +31,20 @@ const DriveService = {
    */
   obtenerCarpetaPadre: function() {
     try {
-      return DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
+      if (!CONFIG.DRIVE.PARENT_FOLDER_ID) {
+        throw new Error('ID de carpeta padre no configurado en CONFIG.DRIVE.PARENT_FOLDER_ID');
+      }
+      
+      const folder = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
+      
+      // Verificar que tengamos acceso a la carpeta
+      try {
+        folder.getName(); // Intenta leer el nombre para verificar acceso
+      } catch (accessError) {
+        throw new Error('No tienes acceso a la carpeta padre (ID: ' + CONFIG.DRIVE.PARENT_FOLDER_ID + '). Verifica los permisos.');
+      }
+      
+      return folder;
     } catch (error) {
       throw new Error('Error al obtener carpeta padre: ' + error.message);
     }

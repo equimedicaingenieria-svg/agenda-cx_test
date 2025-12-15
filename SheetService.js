@@ -147,6 +147,95 @@ const SheetService = {
   },
 
   /**
+   * Busca una cirugía en la hoja Links_AsistenciaTecnica
+   * @param {string} idProyecto - ID del proyecto (sin emoji)
+   * @param {string} paciente - Nombre del paciente
+   * @returns {Object|null} Información encontrada o null
+   */
+  buscarEnLinksAsistencia: function(idProyecto, paciente) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const sheet = ss.getSheetByName(CONFIG.SHEETS.LINKS_SHEET_NAME);
+      
+      if (!sheet) {
+        Logger.log('Hoja Links_AsistenciaTecnica no existe');
+        return null;
+      }
+      
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) {
+        Logger.log('Hoja Links_AsistenciaTecnica está vacía');
+        return null;
+      }
+      
+      // Obtener todos los datos de la hoja (desde fila 2)
+      const data = sheet.getRange(2, 1, lastRow - 1, 12).getValues();
+      const formulas = sheet.getRange(2, 1, lastRow - 1, 12).getFormulas();
+      
+      // Limpiar emojis del ID de proyecto y aplicar trim a ambos campos
+      const idProyectoLimpio = idProyecto.toString().replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+      const pacienteLimpio = paciente.toString().trim();
+      
+      // Buscar por nombre de carpeta que contenga idProyecto y paciente
+      const nombreCarpetaBuscado = idProyectoLimpio + ' - ' + pacienteLimpio;
+      
+      Logger.log('Buscando carpeta: "' + nombreCarpetaBuscado + '"');
+      
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const formulaRow = formulas[i];
+        const nombreCarpeta = row[8]; // Columna I (Nombre carpeta)
+        
+        // Limpiar emojis de la carpeta almacenada y comparar
+        const nombreCarpetaLimpio = nombreCarpeta ? nombreCarpeta.toString().replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim() : '';
+        
+        if (nombreCarpetaLimpio === nombreCarpetaBuscado) {
+          Logger.log('Encontrado en Links_AsistenciaTecnica: ' + nombreCarpeta);
+          
+          // Extraer URLs de las fórmulas HYPERLINK (columnas G y H, índices 6 y 7)
+          let pdfUrl = row[6];
+          let linkForm = row[7];
+          
+          // Si son fórmulas HYPERLINK, extraer la URL
+          if (formulaRow[6] && formulaRow[6].indexOf('HYPERLINK') !== -1) {
+            const pdfMatch = formulaRow[6].match(/=HYPERLINK\("([^"]+)"/);
+            pdfUrl = pdfMatch ? pdfMatch[1] : pdfUrl;
+            Logger.log('PDF URL extraída: ' + pdfUrl);
+          }
+          
+          if (formulaRow[7] && formulaRow[7].indexOf('HYPERLINK') !== -1) {
+            const formMatch = formulaRow[7].match(/=HYPERLINK\("([^"]+)"/);
+            linkForm = formMatch ? formMatch[1] : linkForm;
+            Logger.log('Form URL extraída: ' + linkForm);
+          }
+          
+          return {
+            fechaCx: row[0],
+            horaCx: row[1],
+            paciente: row[2],
+            institucion: row[3],
+            medico: row[4],
+            material: row[5],
+            pdfUrl: pdfUrl,
+            linkForm: linkForm,
+            folderName: row[8],
+            folderId: row[9],
+            hojaOrigen: row[10],
+            filaOrigen: row[11]
+          };
+        }
+      }
+      
+      Logger.log('No se encontró en Links_AsistenciaTecnica: ' + nombreCarpetaBuscado);
+      return null;
+      
+    } catch (error) {
+      Logger.log('Error al buscar en Links_AsistenciaTecnica: ' + error.message);
+      return null;
+    }
+  },
+
+  /**
    * Ordena una hoja por fecha
    * @param {string} sheetName - Nombre de la hoja
    * @param {number} startRow - Fila inicial (por defecto 3)
