@@ -18,7 +18,9 @@ const UIService = {
       // Crear submenú de Configuración
       const submenuConfig = ui.createMenu('⚙️ Configuración')
         .addItem('Instalar Trigger de Formulario', 'instalarTriggerFormulario')
-        .addItem('Verificar Trigger de Formulario', 'verificarTriggerFormulario');
+        .addItem('Verificar Trigger de Formulario', 'verificarTriggerFormulario')
+        .addSeparator()
+        .addItem('🔍 Diagnosticar Carpetas', 'diagnosticarCarpetas');
       
       // Menú principal
       ui.createMenu(CONFIG.UI.MENU_NAME)

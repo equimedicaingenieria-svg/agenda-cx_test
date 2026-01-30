@@ -122,6 +122,9 @@ const FormTriggerService = {
       
       this._moverArchivosACarpeta(archivosAdjuntos, respuestas.folderName, idProyecto);
       
+      // Actualizar documento con datos de Asistencia Técnica
+      this._actualizarDocumentoAsistencia(respuestas);
+      
       Logger.log('=== Procesamiento completado exitosamente ===');
       
     } catch (error) {
@@ -146,7 +149,14 @@ const FormTriggerService = {
       medico: null,
       material: null,
       folderName: null,
-      folderId: null
+      folderId: null,
+      // Campos de Asistencia Técnica
+      iqApellidoNombre: null,
+      horaInicioCx: null,
+      horaFinCx: null,
+      inconvenientes: null,
+      observaciones: null,
+      nPrecintos: null
     };
     
     // Si viene del trigger, usar e.namedValues
@@ -206,6 +216,44 @@ const FormTriggerService = {
             respuestas.material = values[key][0];
             Logger.log('✓ Material: "' + respuestas.material + '"');
           }
+          
+          // === CAMPOS DE ASISTENCIA TÉCNICA ===
+          
+          // Técnica Asistente
+          if (keyLower.indexOf('técnica') !== -1 && keyLower.indexOf('asistente') !== -1) {
+            respuestas.iqApellidoNombre = values[key][0];
+            Logger.log('✓ Técnica Asistente: "' + respuestas.iqApellidoNombre + '"');
+          }
+          
+          // Hora Inicio CX
+          if (keyLower.indexOf('hora') !== -1 && keyLower.indexOf('inicio') !== -1) {
+            respuestas.horaInicioCx = values[key][0];
+            Logger.log('✓ Hora Inicio CX: "' + respuestas.horaInicioCx + '"');
+          }
+          
+          // Hora Fin CX
+          if (keyLower.indexOf('hora') !== -1 && keyLower.indexOf('fin') !== -1) {
+            respuestas.horaFinCx = values[key][0];
+            Logger.log('✓ Hora Fin CX: "' + respuestas.horaFinCx + '"');
+          }
+          
+          // Inconvenientes
+          if (keyLower.indexOf('inconvenientes') !== -1) {
+            respuestas.inconvenientes = values[key][0];
+            Logger.log('✓ Inconvenientes: "' + respuestas.inconvenientes + '"');
+          }
+          
+          // Observaciones
+          if (keyLower.indexOf('observaciones') !== -1) {
+            respuestas.observaciones = values[key][0];
+            Logger.log('✓ Observaciones: "' + respuestas.observaciones + '"');
+          }
+          
+          // Nro de Precintos
+          if (keyLower.indexOf('precinto') !== -1) {
+            respuestas.nPrecintos = values[key][0];
+            Logger.log('✓ Nro de Precintos: "' + respuestas.nPrecintos + '"');
+          }
         }
       }
       
@@ -230,6 +278,126 @@ const FormTriggerService = {
       return values[key][0];
     }
     return null;
+  },
+
+  /**
+   * Actualiza el documento de resumen con los datos de Asistencia Técnica
+   * @private
+   * @param {Object} respuestas - Respuestas del formulario
+   */
+  _actualizarDocumentoAsistencia: function(respuestas) {
+    try {
+      Logger.log('=== Actualizando documento con datos de Asistencia Técnica ===');
+      
+      // Logging de datos recibidos
+      Logger.log('Datos recibidos:');
+      Logger.log('  folderName: ' + respuestas.folderName);
+      Logger.log('  iqApellidoNombre: ' + respuestas.iqApellidoNombre);
+      Logger.log('  horaInicioCx: ' + respuestas.horaInicioCx);
+      Logger.log('  horaFinCx: ' + respuestas.horaFinCx);
+      Logger.log('  inconvenientes: ' + respuestas.inconvenientes);
+      Logger.log('  observaciones: ' + respuestas.observaciones);
+      Logger.log('  nPrecintos: ' + respuestas.nPrecintos);
+      
+      if (!respuestas.folderName) {
+        Logger.log('ADVERTENCIA: No hay folderName, no se puede actualizar documento');
+        return;
+      }
+      
+      // Buscar la carpeta del proyecto
+      const parentFolder = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
+      const folders = parentFolder.getFoldersByName(respuestas.folderName);
+      
+      if (!folders.hasNext()) {
+        Logger.log('ERROR: No se encontró la carpeta: ' + respuestas.folderName);
+        return;
+      }
+      
+      const folder = folders.next();
+      Logger.log('✓ Carpeta encontrada: ' + folder.getName());
+      
+      // Extraer nombre del paciente (sin espacios extra)
+      const pacienteRaw = respuestas.folderName.split(' - ')[1] || respuestas.paciente;
+      const paciente = pacienteRaw.trim();
+      
+      // 1. Copiar plantilla desde el template de Asistencia Técnica
+      Logger.log('Copiando plantilla de Asistencia Técnica desde template...');
+      const nombreDoc = 'Resumen CX - ' + paciente;
+      const templateFile = DriveApp.getFileById(CONFIG.DRIVE.TEMPLATE_ASISTENCIA_DOC_ID);
+      const copiaDoc = templateFile.makeCopy(nombreDoc, folder);
+      Logger.log('✓ Plantilla de Asistencia Técnica copiada: ' + copiaDoc.getName());
+      
+      // 2. Abrir documento y rellenar TODOS los campos
+      const doc = DocumentApp.openById(copiaDoc.getId());
+      const body = doc.getBody();
+      
+      Logger.log('Rellenando placeholders...');
+      
+      // Campos originales de Resumen CX
+      body.replaceText('<<FECHA_CX>>', respuestas.fechaCx || '');
+      body.replaceText('<<HORA_CX>>', respuestas.horaCx || '');
+      body.replaceText('<<PACIENTE>>', respuestas.paciente ? respuestas.paciente.trim() : '');
+      body.replaceText('<<INSTITUCION>>', respuestas.institucion || '');
+      body.replaceText('<<MEDICO>>', respuestas.medico ? respuestas.medico.trim() : '');
+      body.replaceText('<<MATERIAL>>', respuestas.material || '');
+      
+      // Campos nuevos de Asistencia Técnica
+      Logger.log('Reemplazando campos de Asistencia Técnica:');
+      Logger.log('  IQ_APELLIDO_NOMBRE: "' + (respuestas.iqApellidoNombre || '') + '"');
+      Logger.log('  HORA_INICIO_CX: "' + (respuestas.horaInicioCx || '') + '"');
+      Logger.log('  HORA_FIN_CX: "' + (respuestas.horaFinCx || '') + '"');
+      Logger.log('  INCONVENIENTES: "' + (respuestas.inconvenientes || '') + '"');
+      Logger.log('  OBSERVACIONES: "' + (respuestas.observaciones || '') + '"');
+      Logger.log('  N_PRECINTOS: "' + (respuestas.nPrecintos || '') + '"');
+      
+      body.replaceText('<<IQ_APELLIDO_NOMBRE>>', respuestas.iqApellidoNombre || '');
+      body.replaceText('<<HORA_INICIO_CX>>', respuestas.horaInicioCx || '');
+      body.replaceText('<<HORA_FIN_CX>>', respuestas.horaFinCx || '');
+      body.replaceText('<<INCONVENIENTES>>', respuestas.inconvenientes || '');
+      body.replaceText('<<OBSERVACIONES>>', respuestas.observaciones || '');
+      body.replaceText('<<N_PRECINTOS>>', respuestas.nPrecintos || '');
+      
+      doc.saveAndClose();
+      Logger.log('✓ Placeholders reemplazados');
+      
+      // 3. Eliminar PDF anterior si existe
+      // Buscar en la subcarpeta de Informe Asistencia Técnica
+      const nombreSubcarpeta = '02 - Informe Asistencia Técnica';
+      const subcarpetas = folder.getFoldersByName(nombreSubcarpeta);
+      
+      let carpetaDestino = folder;
+      if (subcarpetas.hasNext()) {
+        carpetaDestino = subcarpetas.next();
+        Logger.log('✓ Usando subcarpeta: ' + carpetaDestino.getName());
+      } else {
+        Logger.log('ADVERTENCIA: Subcarpeta no encontrada, usando carpeta principal');
+      }
+      
+      const nombrePdf = 'Resumen CX - ' + paciente + '.pdf';
+      const pdfsExistentes = carpetaDestino.getFilesByName(nombrePdf);
+      
+      while (pdfsExistentes.hasNext()) {
+        const pdfAnterior = pdfsExistentes.next();
+        Logger.log('Eliminando PDF anterior: ' + pdfAnterior.getName());
+        pdfAnterior.setTrashed(true);
+      }
+      
+      // 4. Generar nuevo PDF del documento actualizado en la subcarpeta
+      const pdfBlob = copiaDoc.getAs(MimeType.PDF);
+      const pdfFile = carpetaDestino.createFile(pdfBlob);
+      pdfFile.setName(nombrePdf);
+      Logger.log('✓ PDF regenerado en subcarpeta: ' + nombrePdf);
+      
+      // 5. Eliminar documento temporal
+      copiaDoc.setTrashed(true);
+      Logger.log('✓ Documento temporal eliminado');
+      
+      Logger.log('=== Actualización completada exitosamente ===');
+      
+    } catch (error) {
+      Logger.log('ERROR al actualizar documento: ' + error.message);
+      Logger.log('Stack: ' + error.stack);
+    }
   },
 
   /**

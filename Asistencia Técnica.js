@@ -100,14 +100,17 @@ function procesarAutorizacionCx(fila, nombreHoja) {
     // Obtener datos de la fila
     const datos = SheetService.obtenerDatosFila(fila);
     
+    // Limpiar el ID del proyecto antes de crear la carpeta
+    const idProyectoLimpio = Utils.limpiarIdProyecto(datos.idProyecto);
+    
     // Crear carpeta vacía para el proyecto
-    const folder = DriveService.crearCarpetaCx(datos.idProyecto, datos.paciente);
+    const folder = DriveService.crearCarpetaCx(idProyectoLimpio, datos.paciente);
     const folderUrl = folder.getUrl();
     
     Logger.log('Carpeta creada: ' + folder.getName() + ' (ID: ' + folder.getId() + ')');
     
-    // Insertar hipervínculo de la carpeta en columna C
-    SheetService.insertarHipervincultoCarpeta(nombreHoja, fila, folderUrl, datos.idProyecto);
+    // Insertar hipervínculo de la carpeta en columna C (usando el ID limpio)
+    SheetService.insertarHipervincultoCarpeta(nombreHoja, fila, folderUrl, idProyectoLimpio);
     
     // Autorizar la cirugía (actualiza estado y formato)
     SheetService.autorizarCirugia(nombreHoja, fila);
@@ -223,7 +226,17 @@ function generarPdfResumenCx(fila, nombreHoja) {
     const folder = folders.next();
     Logger.log('Carpeta encontrada: ' + folder.getName() + ' (ID: ' + folder.getId() + ')');
     
-    // Generar PDF
+    // Eliminar PDF anterior si existe
+    const nombrePdfBuscado = 'Resumen CX - ' + datos.paciente + '.pdf';
+    const pdfExistentes = folder.getFilesByName(nombrePdfBuscado);
+    
+    while (pdfExistentes.hasNext()) {
+      const pdfAnterior = pdfExistentes.next();
+      Logger.log('Eliminando PDF anterior: ' + pdfAnterior.getName());
+      DriveService.moverAPapelera(pdfAnterior);
+    }
+    
+    // Generar nuevo PDF
     const datosPdf = PdfService.prepararDatosParaPdf(datos);
     const pdfFile = PdfService.generarPdfCx(folder, datosPdf);
     
@@ -353,7 +366,8 @@ function procesarGenerarFormulario(fila, nombreHoja) {
     Logger.log('✓ Formulario no existe, continuando...');
     
     // VALIDACIÓN 2: Buscar la carpeta del proyecto
-    const nombreCarpeta = idProyectoLimpio + ' - ' + datos.paciente.trim();
+    // Intentar primero sin trim (carpetas antiguas pueden tener espacios)
+    let nombreCarpeta = idProyectoLimpio + ' - ' + datos.paciente;
     Logger.log('Buscando carpeta: "' + nombreCarpeta + '"');
     
     const parentFolder = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
@@ -373,10 +387,24 @@ function procesarGenerarFormulario(fila, nombreHoja) {
     
     Logger.log('Carpeta encontrada: ' + folderName);
     
-    // Generar PDF si no existe
-    const datosPdf = PdfService.prepararDatosParaPdf(datos);
-    const pdfFile = PdfService.generarPdfCx(folder, datosPdf);
-    const pdfUrl = DriveService.obtenerUrlArchivo(pdfFile);
+    // Buscar PDF existente en la carpeta en lugar de generarlo nuevamente
+    let pdfUrl = '';
+    const nombrePdfBuscado = 'Resumen CX - ' + datos.paciente + '.pdf';
+    const pdfFiles = folder.getFilesByName(nombrePdfBuscado);
+    
+    if (pdfFiles.hasNext()) {
+      // PDF ya existe, usar el existente
+      const pdfFile = pdfFiles.next();
+      pdfUrl = DriveService.obtenerUrlArchivo(pdfFile);
+      Logger.log('✓ PDF existente encontrado: ' + nombrePdfBuscado);
+    } else {
+      // PDF no existe, generarlo
+      Logger.log('PDF no existe, generando nuevo...');
+      const datosPdf = PdfService.prepararDatosParaPdf(datos);
+      const pdfFile = PdfService.generarPdfCx(folder, datosPdf);
+      pdfUrl = DriveService.obtenerUrlArchivo(pdfFile);
+      Logger.log('✓ PDF generado: ' + nombrePdfBuscado);
+    }
     
     // Crear formulario prellenado
     const datosForm = FormService.prepararDatosParaForm(datos);
@@ -529,6 +557,54 @@ function instalarTriggerFormulario() {
     const resultado = FormTriggerService.instalarTrigger();
     UIService.mostrarAlerta(resultado);
   } catch (error) {
+    UIService.mostrarAlerta('Error: ' + error.message);
+  }
+}
+
+/**
+ * DIAGNÓSTICO: Lista carpetas existentes para un paciente
+ * Útil para debuggear problemas de búsqueda de carpetas
+ */
+function diagnosticarCarpetas() {
+  try {
+    const { sheet, row } = SheetService.obtenerSeleccionActual();
+    const datos = SheetService.obtenerDatosFila(row);
+    
+    Logger.log('=== DIAGNÓSTICO DE CARPETAS ===');
+    Logger.log('ID Proyecto original: "' + datos.idProyecto + '"');
+    Logger.log('Paciente: "' + datos.paciente + '"');
+    
+    const idLimpio = Utils.limpiarIdProyecto(datos.idProyecto);
+    Logger.log('ID Proyecto limpio: "' + idLimpio + '"');
+    
+    const parentFolder = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
+    Logger.log('Carpeta padre: ' + parentFolder.getName());
+    
+    // Listar TODAS las carpetas que contengan el paciente
+    Logger.log('\n=== Buscando carpetas con paciente: "' + datos.paciente + '" ===');
+    const carpetasPorPaciente = parentFolder.getFolders();
+    let encontradas = 0;
+    
+    while (carpetasPorPaciente.hasNext()) {
+      const carpeta = carpetasPorPaciente.next();
+      const nombre = carpeta.getName();
+      
+      if (nombre.indexOf(datos.paciente) !== -1) {
+        encontradas++;
+        Logger.log(encontradas + '. "' + nombre + '" (ID: ' + carpeta.getId() + ')');
+      }
+    }
+    
+    if (encontradas === 0) {
+      Logger.log('❌ No se encontró ninguna carpeta con el nombre del paciente');
+    }
+    
+    Logger.log('\n=== FIN DIAGNÓSTICO ===');
+    
+    UIService.mostrarAlerta('Diagnóstico completado. Revisa los logs (Ctrl+Enter o Ver > Registros).');
+    
+  } catch (error) {
+    Logger.log('Error en diagnóstico: ' + error.message);
     UIService.mostrarAlerta('Error: ' + error.message);
   }
 }

@@ -110,7 +110,9 @@ const Utils = {
    * @returns {string} Nombre del archivo
    */
   generarNombreArchivo: function(idProyecto, paciente, sufijo = '') {
-    const nombre = idProyecto + ' - ' + paciente;
+    // Aplicar trim para evitar espacios extra en los nombres
+    const pacienteLimpio = paciente ? paciente.trim() : '';
+    const nombre = idProyecto + ' - ' + pacienteLimpio;
     return sufijo ? nombre + ' - ' + sufijo : nombre;
   },
 
@@ -144,8 +146,9 @@ const Utils = {
     }
     
     // Convertir a string, quitar emojis Unicode y aplicar trim
+    // NO reemplazar barras - Google Drive las acepta en nombres de carpeta
     return idProyecto.toString()
-      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')  // Remover emojis
       .trim();
   }
 };

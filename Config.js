@@ -13,7 +13,8 @@ const CONFIG = {
   DRIVE: {
     //PARENT_FOLDER_ID: '18_VzySYKclQSprTiYrY3WPm7nzFkz4ol', 
     PARENT_FOLDER_ID: '1zWFGYBLXirVW7vGefodmCnjOp_Q9Jr9e',
-    TEMPLATE_DOC_ID: '1xAhYoynaUhtA8DDx0MMt5VVYlpbOiRf8tUx9Pg7DE-Y'
+    TEMPLATE_DOC_ID: '1xAhYoynaUhtA8DDx0MMt5VVYlpbOiRf8tUx9Pg7DE-Y',
+    TEMPLATE_ASISTENCIA_DOC_ID: '1MyPQb8duhNLRMLNh3yjAvMPMBZs2Gmxelb-F3Pn1nQI'
   },
 
   /**
@@ -46,12 +47,19 @@ const CONFIG = {
     // Si cambias los nombres en el formulario, actualiza estos valores
     FIELD_NAMES: {
       ID_CARPETA: 'ID CARPETA',
-      PACIENTE: 'PACIENTE',
-      FECHA_CX: 'FECHA DE CIRUGÍA',
-      HORA_CX: 'HORA',
-      INSTITUCION: 'INSTITUCIÓN',
-      MEDICO: 'MÉDICO',
-      MATERIAL: 'MATERIAL'
+      PACIENTE: 'Paciente',
+      FECHA_CX: 'Fecha de cirugía',
+      HORA_CX: 'Hora programada de inicio de cirugía',
+      INSTITUCION: 'Institución donde se realizó la cirugía',
+      MEDICO: 'Médico interviniente',
+      MATERIAL: 'Material enviado',
+      // Campos de Asistencia Técnica
+      IQ_APELLIDO_NOMBRE: 'Nombre y Apellido de Técnica Asistente',
+      HORA_INICIO_CX: 'Hora de inicio de cirugía',
+      HORA_FIN_CX: 'Hora de finalización',
+      INCONVENIENTES: 'Inconvenientes suscitados y motivos de los mismos',
+      OBSERVACIONES: 'Observaciones y/o sugerencias',
+      N_PRECINTOS: 'Nro de precinto/s'
     }
   },
 
