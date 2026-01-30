@@ -131,5 +131,21 @@ const Utils = {
    */
   obtenerValorODefault: function(valor, valorPorDefecto = '') {
     return this.estaVacio(valor) ? valorPorDefecto : valor;
+  },
+
+  /**
+   * Limpia el ID de proyecto removiendo emojis y espacios extra
+   * @param {string} idProyecto - ID del proyecto a limpiar
+   * @returns {string} ID limpio sin emojis ni espacios extra
+   */
+  limpiarIdProyecto: function(idProyecto) {
+    if (!idProyecto) {
+      return '';
+    }
+    
+    // Convertir a string, quitar emojis Unicode y aplicar trim
+    return idProyecto.toString()
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .trim();
   }
 };

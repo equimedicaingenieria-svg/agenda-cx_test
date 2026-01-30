@@ -131,6 +131,14 @@ const CONFIG = {
       HEIGHT: 360,
       AUTORIZACION_HEIGHT: 420
     }
+  },
+
+  /**
+   * Configuración de debugging y logs
+   */
+  DEBUG: {
+    ENABLED: true,  // Activar/desactivar logs de debugging
+    LEVEL: 'INFO'   // 'DEBUG', 'INFO', 'ERROR'
   }
 };
 

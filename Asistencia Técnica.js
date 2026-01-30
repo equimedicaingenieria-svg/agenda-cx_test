@@ -199,10 +199,8 @@ function generarPdfResumenCx(fila, nombreHoja) {
     
     Logger.log('Datos obtenidos - Paciente: ' + datos.paciente + ', ID: ' + datos.idProyecto);
     
-    // Limpiar el ID del proyecto (quitar emojis y espacios extra)
-    let idProyectoLimpio = datos.idProyecto ? datos.idProyecto.toString().trim() : '';
-    // Eliminar emojis (caracteres Unicode fuera del rango básico)
-    idProyectoLimpio = idProyectoLimpio.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    // Limpiar el ID del proyecto usando la función helper
+    const idProyectoLimpio = Utils.limpiarIdProyecto(datos.idProyecto);
     
     Logger.log('ID Proyecto limpio: ' + idProyectoLimpio);
     
@@ -320,29 +318,8 @@ function procesarGenerarFormulario(fila, nombreHoja) {
   try {
     Logger.log('Generando formulario - Fila: ' + fila + ', Hoja: ' + nombreHoja);
     
-    // Obtener la hoja y los datos
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const hoja = ss.getSheetByName(nombreHoja);
-    
-    if (!hoja) {
-      throw new Error('Hoja "' + nombreHoja + '" no encontrada');
-    }
-    
-    // Obtener datos directamente de la hoja especificada
-    const values = hoja.getRange(fila, 1, 1, hoja.getLastColumn()).getValues()[0];
-    const cols = CONFIG.SHEETS.COLUMNS;
-    
-    const datos = {
-      fechaCx: values[cols.FECHA_CX - 1],
-      idProyecto: values[cols.ID_PROYECTO - 1],
-      estado: values[cols.ESTADO - 1],
-      paciente: values[cols.PACIENTE - 1],
-      institucion: values[cols.INSTITUCION - 1],
-      horaCx: values[cols.HORA_CX - 1],
-      medico: values[cols.MEDICO - 1],
-      cliente: values[cols.CLIENTE - 1],
-      material: values[cols.MATERIAL - 1]
-    };
+    // Obtener datos usando la función helper
+    const datos = SheetService.obtenerDatosCompletos(nombreHoja, fila);
     
     Logger.log('Estado de la cirugía: ' + datos.estado);
     
@@ -357,9 +334,8 @@ function procesarGenerarFormulario(fila, nombreHoja) {
     
     Logger.log('✓ Cirugía autorizada');
     
-    // Limpiar el ID del proyecto
-    let idProyectoLimpio = datos.idProyecto ? datos.idProyecto.toString().trim() : '';
-    idProyectoLimpio = idProyectoLimpio.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    // Limpiar el ID del proyecto usando la función helper
+    const idProyectoLimpio = Utils.limpiarIdProyecto(datos.idProyecto);
     
     Logger.log('ID Proyecto limpio: ' + idProyectoLimpio);
     
@@ -456,34 +432,13 @@ function consultarInfoFormulario(fila, nombreHoja) {
     Logger.log('=== INICIO consultarInfoFormulario ===');
     Logger.log('Fila: ' + fila + ', Hoja: ' + nombreHoja);
     
-    // Obtener la hoja y los datos
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    Logger.log('Spreadsheet obtenido');
-    
-    const hoja = ss.getSheetByName(nombreHoja);
-    
-    if (!hoja) {
-      Logger.log('ERROR: Hoja no encontrada');
-      throw new Error('Hoja "' + nombreHoja + '" no encontrada');
-    }
-    
-    Logger.log('Hoja encontrada: ' + hoja.getName());
-    
-    // Obtener datos directamente de la hoja especificada
-    const values = hoja.getRange(fila, 1, 1, hoja.getLastColumn()).getValues()[0];
-    const cols = CONFIG.SHEETS.COLUMNS;
-    
-    const datos = {
-      fechaCx: values[cols.FECHA_CX - 1],
-      idProyecto: values[cols.ID_PROYECTO - 1],
-      paciente: values[cols.PACIENTE - 1]
-    };
+    // Obtener datos usando la función helper
+    const datos = SheetService.obtenerDatosCompletos(nombreHoja, fila);
     
     Logger.log('Datos obtenidos - Paciente: ' + datos.paciente + ', ID: ' + datos.idProyecto);
     
-    // Limpiar el ID del proyecto
-    let idProyectoLimpio = datos.idProyecto ? datos.idProyecto.toString().trim() : '';
-    idProyectoLimpio = idProyectoLimpio.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    // Limpiar el ID del proyecto usando la función helper
+    const idProyectoLimpio = Utils.limpiarIdProyecto(datos.idProyecto);
     
     Logger.log('ID Proyecto limpio: ' + idProyectoLimpio);
     Logger.log('Buscando en Links_AsistenciaTecnica...');
@@ -537,29 +492,12 @@ function consultarInfoFormulario(fila, nombreHoja) {
  */
 function obtenerResumenCx(fila, nombreHoja) {
   try {
-    // Obtener la hoja y los datos
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const hoja = ss.getSheetByName(nombreHoja);
+    // Obtener datos usando la función helper
+    const datos = SheetService.obtenerDatosCompletos(nombreHoja, fila);
     
-    if (!hoja) {
-      throw new Error('Hoja "' + nombreHoja + '" no encontrada');
-    }
-    
-    // Obtener datos directamente de la hoja especificada
-    const values = hoja.getRange(fila, 1, 1, hoja.getLastColumn()).getValues()[0];
-    const cols = CONFIG.SHEETS.COLUMNS;
-    
-    const datos = {
-      fechaCx: values[cols.FECHA_CX - 1],
-      horaCx: values[cols.HORA_CX - 1],
-      paciente: values[cols.PACIENTE - 1],
-      institucion: values[cols.INSTITUCION - 1],
-      medico: values[cols.MEDICO - 1],
-      cliente: values[cols.CLIENTE - 1],
-      material: values[cols.MATERIAL - 1]
-    };
-    
-    // Construir el resumen
+    // Construir el resumen usando la función de UIService
+    // Nota: No podemos llamar directamente a _construirMensajeResumen porque es privada,
+    // pero podemos construir manualmente con la misma lógica
     let resumen = '✅ CX Autorizada\n';
     resumen += '📅 Fecha: ' + Utils.formatearFechaArg(datos.fechaCx);
     
@@ -567,7 +505,7 @@ function obtenerResumenCx(fila, nombreHoja) {
       resumen += ' – ' + Utils.formatearHoraArg(datos.horaCx) + ' hs';
     }
     
-    resumen += '\n\n';
+    resumen += '\n';
     resumen += '👤 Paciente: ' + Utils.obtenerValorODefault(datos.paciente) + '\n';
     resumen += '🏥 Institución: ' + Utils.obtenerValorODefault(datos.institucion) + '\n';
     resumen += '🩺 Médico: ' + Utils.obtenerValorODefault(datos.medico) + '\n';
@@ -580,141 +518,6 @@ function obtenerResumenCx(fila, nombreHoja) {
   } catch (error) {
     Logger.log('Error al obtener resumen CX: ' + error.message);
     throw new Error('Error al obtener resumen: ' + error.message);
-  }
-}
-
-/**
- * Genera el formulario de asistencia técnica y muestra el mensaje para WhatsApp
- * Se ejecuta desde el menú personalizado
- * @deprecated - Usar mostrarFormularioAsistenciaTecnica() en su lugar
- */
-function generarFormularioAsistenciaTecnica() {
-  try {
-    // 1. Obtener datos de la fila seleccionada
-    const { sheet, row } = SheetService.obtenerSeleccionActual();
-    const datos = SheetService.obtenerDatosFila(row);
-    const nombreHoja = sheet.getName();
-
-    // 2. Validar datos obligatorios
-    if (!Utils.validarDatosObligatorios(datos)) {
-      UIService.mostrarAlerta(CONFIG.MESSAGES.ERROR_MISSING_DATA);
-      return;
-    }
-
-    // 3. Validar que esté autorizada
-    if (!SheetService.estaAutorizada(nombreHoja, row)) {
-      UIService.mostrarAlerta(
-        '⚠️ Cirugía No Autorizada\n\n' +
-        'Esta cirugía no está autorizada aún.\n\n' +
-        '📋 Estado actual: ' + (datos.estado || 'Sin estado') + '\n\n' +
-        'Por favor, autoriza la cirugía primero usando:\n' +
-        'CX → ✅ Autorizar Cirugía'
-      );
-      return;
-    }
-
-    // 4. Buscar la carpeta del proyecto
-    // Limpiar el ID del proyecto (quitar emojis y espacios extra)
-    let idProyectoLimpio = datos.idProyecto ? datos.idProyecto.toString().trim() : '';
-    idProyectoLimpio = idProyectoLimpio.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
-    
-    const nombreCarpeta = idProyectoLimpio + ' - ' + datos.paciente;
-    const parentFolder = DriveApp.getFolderById(CONFIG.DRIVE.PARENT_FOLDER_ID);
-    const folders = parentFolder.getFoldersByName(nombreCarpeta);
-    
-    if (!folders.hasNext()) {
-      UIService.mostrarAlerta(
-        '⚠️ Carpeta No Encontrada\n\n' +
-        'No se encontró la carpeta del proyecto: ' + nombreCarpeta + '\n\n' +
-        'Por favor, autoriza la cirugía primero para crear la carpeta.'
-      );
-      return;
-    }
-    
-    const folder = folders.next();
-    const folderId = folder.getId();
-    const folderName = folder.getName();
-
-    // 5. Crear formulario prellenado
-    const datosForm = FormService.prepararDatosParaForm(datos);
-    const linkForm = FormService.crearLinkFormPrellenado(
-      folderName,
-      folderId,
-      datosForm
-    );
-
-    // 6. Mostrar diálogo con mensaje de WhatsApp
-    const mensajeWhatsApp = UIService.construirMensajeWhatsApp(datos, linkForm);
-    UIService.mostrarDialogoWhatsApp(mensajeWhatsApp);
-
-    Logger.log('Formulario de asistencia técnica generado - Fila: ' + row);
-
-  } catch (error) {
-    UIService.mostrarAlerta('Error: ' + error.message);
-    Logger.log('Error en generarFormularioAsistenciaTecnica: ' + error.stack);
-  }
-}
-
-
-/**
- * Flujo completo de generación de carpeta, PDF y formulario
- * Se ejecuta desde el menú personalizado
- */
-function flujoCxDesdeFila() {
-  try {
-    // 1. Obtener datos de la fila seleccionada
-    const { sheet, row } = SheetService.obtenerSeleccionActual();
-    const datosRaw = SheetService.obtenerDatosFila(row);
-
-    // 2. Validar datos obligatorios
-    if (!Utils.validarDatosObligatorios(datosRaw)) {
-      UIService.mostrarAlerta(CONFIG.MESSAGES.ERROR_MISSING_DATA);
-      return;
-    }
-
-    // 3. Crear carpeta
-    const folder = DriveService.crearCarpetaCx(datosRaw.idProyecto, datosRaw.paciente);
-    const folderUrl = folder.getUrl();
-
-    // 3.1. Insertar hipervínculo de la carpeta en columna C
-    SheetService.insertarHipervincultoCarpeta(sheet.getName(), row, folderUrl, datosRaw.idProyecto);
-
-    // 4. Generar PDF
-    const datosPdf = PdfService.prepararDatosParaPdf(datosRaw);
-    const pdfFile = PdfService.generarPdfCx(folder, datosPdf);
-    const pdfUrl = DriveService.obtenerUrlArchivo(pdfFile);
-
-    // 5. Crear link del formulario prellenado
-    const datosForm = FormService.prepararDatosParaForm(datosRaw);
-    const linkForm = FormService.crearLinkFormPrellenado(
-      folder.getName(),
-      folder.getId(),
-      datosForm
-    );
-
-    // 6. Registrar en hoja de links
-    SheetService.guardarLinkEnOtraHoja({
-      fechaCx: Utils.formatearFechaArg(datosRaw.fechaCx),
-      horaCx: Utils.formatearHoraArg(datosRaw.horaCx),
-      paciente: datosRaw.paciente,
-      institucion: datosRaw.institucion,
-      medico: datosRaw.medico,
-      material: datosRaw.material,
-      pdfUrl: pdfUrl,
-      linkForm: linkForm,
-      folderName: folder.getName(),
-      folderId: folder.getId(),
-      hojaOrigen: sheet.getName(),
-      filaOrigen: row
-    });
-
-    // 7. Mostrar diálogo con mensaje para WhatsApp
-    const mensajeWhatsApp = UIService.construirMensajeWhatsApp(datosRaw, linkForm);
-    UIService.mostrarDialogoWhatsApp(mensajeWhatsApp);
-
-  } catch (error) {
-    UIService.mostrarAlerta('Error en el flujo: ' + error.message);
-    Logger.log('Error detallado: ' + error.stack);
   }
 }
 

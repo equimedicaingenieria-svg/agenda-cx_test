@@ -43,31 +43,6 @@ const UIService = {
   },
 
   /**
-   * Muestra el resumen de una cirugía en un diálogo
-   * @param {Object} datos - Datos de la cirugía
-   */
-  mostrarResumenCx: function(datos) {
-    const mensaje = this._construirMensajeResumen(datos);
-    this.mostrarAlerta(mensaje);
-  },
-
-  /**
-   * Construye el mensaje de resumen
-   * @private
-   * @param {Object} datos - Datos de la cirugía
-   * @returns {string} Mensaje formateado
-   */
-  _construirMensajeResumen: function(datos) {
-    return '📋 RESUMEN DE CIRUGÍA\n\n' +
-           '📅 Fecha: ' + Utils.formatearFechaArg(datos.fechaCx) + '\n' +
-           '⏰ Hora: ' + Utils.formatearHoraArg(datos.horaCx) + ' hs\n\n' +
-           '👤 Paciente: ' + Utils.obtenerValorODefault(datos.paciente) + '\n' +
-           '🏥 Institución: ' + Utils.obtenerValorODefault(datos.institucion) + '\n' +
-           '🩺 Médico: ' + Utils.obtenerValorODefault(datos.medico) + '\n' +
-           '📦 Material: ' + Utils.obtenerValorODefault(datos.material);
-  },
-
-  /**
    * Muestra el diálogo con el mensaje para WhatsApp
    * @param {string} mensaje - Mensaje prellenado
    */
@@ -201,7 +176,6 @@ const UIService = {
     
     return '✅ CX Autorizada' + '\n' +
            lineaFecha + '\n' +
-           '\n' +
            '👤 Paciente: ' + Utils.obtenerValorODefault(datos.paciente) + '\n' +
            '🏥 Institución: ' + Utils.obtenerValorODefault(datos.institucion) + '\n' +
            '🩺 Médico: ' + Utils.obtenerValorODefault(datos.medico) + '\n' +
@@ -244,7 +218,7 @@ const UIService = {
       const mensaje = this._construirMensajeResumen(datos);
       
       const template = HtmlService.createTemplateFromFile('DialogoResumenCx');
-      template.mensaje = Utils.sanitizarHtml(mensaje);
+      template.mensaje = Utils.sanitizarHtml(mensaje.trim());
       template.fila = fila;
       template.nombreHoja = nombreHoja;
       

@@ -26,6 +26,28 @@ const SheetService = {
   },
 
   /**
+   * Obtiene los datos completos de una fila específica de una hoja específica
+   * @param {string} nombreHoja - Nombre de la hoja
+   * @param {number} fila - Número de fila
+   * @returns {Object} Datos extraídos de la fila
+   */
+  obtenerDatosCompletos: function(nombreHoja, fila) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const hoja = ss.getSheetByName(nombreHoja);
+      
+      if (!hoja) {
+        throw new Error('Hoja "' + nombreHoja + '" no encontrada');
+      }
+      
+      const values = hoja.getRange(fila, 1, 1, hoja.getLastColumn()).getValues()[0];
+      return this._mapearDatosFila(values);
+    } catch (error) {
+      throw new Error('Error al obtener datos de la fila: ' + error.message);
+    }
+  },
+
+  /**
    * Mapea los valores de la fila a un objeto estructurado
    * @private
    * @param {Array} values - Valores de la fila
