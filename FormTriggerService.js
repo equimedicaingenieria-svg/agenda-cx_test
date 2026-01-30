@@ -152,6 +152,7 @@ const FormTriggerService = {
     // Si viene del trigger, usar e.namedValues
     if (e && e.namedValues) {
       const values = e.namedValues;
+      const fieldNames = CONFIG.FORM.FIELD_NAMES;
       
       // Buscar por los nombres de las preguntas del formulario
       for (var key in values) {
@@ -161,45 +162,47 @@ const FormTriggerService = {
           
           Logger.log('Analizando campo: "' + key + '"');
           
-          // Buscar "ID CARPETA" - tu formulario lo tiene así
-          if (keyUpper === 'ID CARPETA' || keyUpper === 'ID DE CARPETA' || 
+          // Buscar "ID CARPETA" usando CONFIG
+          if (keyUpper === fieldNames.ID_CARPETA.toUpperCase() || 
+              keyUpper === 'ID DE CARPETA' || 
               (keyLower.indexOf('id') !== -1 && keyLower.indexOf('carpeta') !== -1)) {
             respuestas.folderName = values[key][0];
             respuestas.folderId = values[key][0]; // Usar el mismo valor
             Logger.log('✓ ID CARPETA encontrado: "' + respuestas.folderName + '"');
           }
           
-          // Paciente
-          if (keyLower.indexOf('paciente') !== -1) {
+          // Paciente - buscar por coincidencia exacta o parcial
+          if (keyUpper === fieldNames.PACIENTE.toUpperCase() || keyLower.indexOf('paciente') !== -1) {
             respuestas.paciente = values[key][0];
             Logger.log('✓ Paciente: "' + respuestas.paciente + '"');
           }
           
-          // Fecha
+          // Fecha - buscar por coincidencia
           if (keyLower.indexOf('fecha') !== -1 && keyLower.indexOf('cirug') !== -1) {
             respuestas.fechaCx = values[key][0];
             Logger.log('✓ Fecha: "' + respuestas.fechaCx + '"');
           }
           
           // Hora
-          if (keyLower.indexOf('hora') !== -1) {
+          if (keyUpper === fieldNames.HORA_CX.toUpperCase() || keyLower.indexOf('hora') !== -1) {
             respuestas.horaCx = values[key][0];
           }
           
           // Institución
-          if (keyLower.indexOf('instituci') !== -1) {
+          if (keyUpper === fieldNames.INSTITUCION.toUpperCase() || keyLower.indexOf('instituci') !== -1) {
             respuestas.institucion = values[key][0];
             Logger.log('✓ Institución: "' + respuestas.institucion + '"');
           }
           
           // Médico
-          if (keyLower.indexOf('m') !== -1 && keyLower.indexOf('dico') !== -1) {
+          if (keyUpper === fieldNames.MEDICO.toUpperCase() || 
+              (keyLower.indexOf('m') !== -1 && keyLower.indexOf('dico') !== -1)) {
             respuestas.medico = values[key][0];
             Logger.log('✓ Médico: "' + respuestas.medico + '"');
           }
           
           // Material
-          if (keyLower.indexOf('material') !== -1) {
+          if (keyUpper === fieldNames.MATERIAL.toUpperCase() || keyLower.indexOf('material') !== -1) {
             respuestas.material = values[key][0];
             Logger.log('✓ Material: "' + respuestas.material + '"');
           }

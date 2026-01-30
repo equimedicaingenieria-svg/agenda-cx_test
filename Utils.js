@@ -90,7 +90,11 @@ const Utils = {
    * @returns {string} Texto sanitizado
    */
   sanitizarHtml: function(texto) {
-    return texto
+    if (!texto || texto === null || texto === undefined) {
+      return '';
+    }
+    
+    return texto.toString()
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')

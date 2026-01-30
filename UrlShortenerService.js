@@ -36,7 +36,8 @@ const UrlShortenerService = {
       
       const response = UrlFetchApp.fetch(apiUrl, {
         method: 'get',
-        muteHttpExceptions: true
+        muteHttpExceptions: true,
+        deadline: 10  // Timeout de 10 segundos
       });
       
       const shortUrl = response.getContentText().trim();
@@ -64,7 +65,8 @@ const UrlShortenerService = {
       
       const response = UrlFetchApp.fetch(apiUrl, {
         method: 'get',
-        muteHttpExceptions: true
+        muteHttpExceptions: true,
+        deadline: 10  // Timeout de 10 segundos
       });
       
       const shortUrl = response.getContentText().trim();

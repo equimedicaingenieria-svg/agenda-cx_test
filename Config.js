@@ -40,6 +40,18 @@ const CONFIG = {
       MATERIAL: 'entry.1052872094',
       FOLDER_NAME: 'entry.702791237',  // Campo visible
       FOLDER_ID: 'entry.2111057105'     // Campo oculto
+    },
+    
+    // Nombres de los campos del formulario (para el trigger)
+    // Si cambias los nombres en el formulario, actualiza estos valores
+    FIELD_NAMES: {
+      ID_CARPETA: 'ID CARPETA',
+      PACIENTE: 'PACIENTE',
+      FECHA_CX: 'FECHA DE CIRUGÍA',
+      HORA_CX: 'HORA',
+      INSTITUCION: 'INSTITUCIÓN',
+      MEDICO: 'MÉDICO',
+      MATERIAL: 'MATERIAL'
     }
   },
 

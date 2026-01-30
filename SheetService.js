@@ -130,6 +130,17 @@ const SheetService = {
    * @param {Object} info - Información del link
    */
   _registrarNuevoLink: function(sheet, info) {
+    // Validar que no exista duplicado antes de insertar
+    const idProyectoLimpio = info.folderName ? info.folderName.split(' - ')[0].replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim() : '';
+    const pacienteLimpio = info.paciente ? info.paciente.toString().trim() : '';
+    
+    const existe = this.buscarEnLinksAsistencia(idProyectoLimpio, pacienteLimpio);
+    
+    if (existe) {
+      Logger.log('ADVERTENCIA: Ya existe un registro para ' + info.folderName + '. Se omite inserción duplicada.');
+      return; // No insertar duplicado
+    }
+    
     sheet.appendRow([
       info.fechaCx,
       info.horaCx,
@@ -144,6 +155,8 @@ const SheetService = {
       info.hojaOrigen,
       info.filaOrigen
     ]);
+    
+    Logger.log('✓ Registro insertado en Links_AsistenciaTecnica: ' + info.folderName);
   },
 
   /**
